@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.itcast.dao.system.DeptDao">
+    <!--封装ResultMap-->
+    <resultMap id="BaseResultMap" type="cn.itcast.domain.system.Dept">
+        <id column="dept_id" property="id"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="state" property="state"/>
+        <result column="company_id" property="companyId"/>
+        <result column="company_name" property="companyName"/>
+        <!--
+           association: 封装一个对象，现在就是封装Dept parent对象
+              property: 需要封装对象的属性名称
+              column: 封装对象查询时所需要的SQL语句的参数（条件）
+              javaType: 需要封装对象的类型
+              select: 封装对象查询时所需要的SQL语句(通过Dao接口的方法名称去查询的)
+
+        -->
+        <association property="parent"
+                     column="parent_id"
+                     javaType="cn.itcast.domain.system.Dept"
+                     select="cn.itcast.dao.system.DeptDao.findById"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="BaseResultMap">
+        select * from pe_dept where company_id = #{companyId}
+    </select>
+    <select id="findById" resultMap="BaseResultMap">
+        select * from pe_dept where dept_id = #{deptId}
+    </select>
+    <insert id="save">
+        insert into pe_dept(
+            dept_id,
+            dept_name,
+            parent_id,
+            state,
+            company_id,
+            company_name
+        ) values(
+                    #{id},
+                    #{deptName},
+                    <choose>
+                        <when test="parent==null || parent.id==''">
+                            NULL,
+                        </when>
+                        <otherwise>
+                            #{parent.id},
+                        </otherwise>
+                    </choose>
+                    #{state},
+                    #{companyId},
+                    #{companyName}
+                )
+    </insert>
+
+    <update id="update">
+        update pe_dept SET
+                           dept_name = #{deptName},
+        <choose>
+            <when test="parent==null || parent.id==''">
+                parent_id = NULL,
+            </when>
+            <otherwise>
+                parent_id = #{parent.id},
+            </otherwise>
+        </choose>
+                           state = #{state},
+                           company_id = #{companyId},
+                           company_name = #{companyName}
+        where dept_id = #{id}
+    </update>
+
+    <select id="findDeptByParentId" resultType="long">
+        select count(*) from pe_dept where parent_id = #{id}
+    </select>
+    <!--删除部门-->
+    <delete id="delete" parameterType="string">
+        delete from pe_dept where dept_id = #{deptId}
+    </delete>
+</mapper>
